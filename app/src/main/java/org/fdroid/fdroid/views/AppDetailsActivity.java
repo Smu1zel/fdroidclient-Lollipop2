@@ -22,6 +22,7 @@
 package org.fdroid.fdroid.views;
 
 import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.app.PendingIntent;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
@@ -778,6 +779,7 @@ public class AppDetailsActivity extends AppCompatActivity
         NfcHelper.disableAndroidBeam(this);
     }
 
+    @TargetApi(18)
     private BluetoothAdapter getBluetoothAdapter() {
         // to use the new, recommended way of getting the adapter
         // http://developer.android.com/reference/android/bluetooth/BluetoothAdapter.html

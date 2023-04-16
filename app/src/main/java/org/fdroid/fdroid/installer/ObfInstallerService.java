@@ -121,9 +121,11 @@ public class ObfInstallerService extends IntentService {
         } else {
             intent.setDataAndType(FileProvider.getUriForFile(this, Installer.AUTHORITY, file), mimeType);
         }
-        intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION
-                | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
-        if (intent.resolveActivity(getPackageManager()) != null) {
+        if (Build.VERSION.SDK_INT >= 23) {
+            intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+        }
+        if (intent != null && intent.resolveActivity(getPackageManager()) != null) {
             startActivity(intent);
             sendBroadcastInstall(Installer.ACTION_INSTALL_COMPLETE, canonicalUri, app, apk, null);
         } else {

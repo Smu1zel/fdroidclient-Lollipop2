@@ -112,7 +112,7 @@ final public class WifiApControl {
 	@Nullable
 	public static WifiApControl getInstance(Context context) {
 		if (instance == null) {
-			if (!Settings.System.canWrite(context)) {
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.System.canWrite(context)) {
 				Log.e(TAG, "6.0 or later, but haven't been granted WRITE_SETTINGS!");
 				return null;
 			}
@@ -146,8 +146,36 @@ final public class WifiApControl {
 		return instance;
 	}
 
+	@TargetApi(Build.VERSION_CODES.GINGERBREAD)
 	private static String getDeviceName(WifiManager wifiManager) {
-		Log.w(TAG, "6.0 or later, unaccessible MAC - falling back to the default device name: " + FALLBACK_DEVICE);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+			Log.w(TAG, "6.0 or later, unaccessible MAC - falling back to the default device name: " + FALLBACK_DEVICE);
+			return FALLBACK_DEVICE;
+		}
+
+		@SuppressLint("HardwareIds")
+		String macString = wifiManager.getConnectionInfo().getMacAddress();
+		if (macString == null) {
+			Log.w(TAG, "MAC Address not found - Wi-Fi disabled? Falling back to the default device name: " + FALLBACK_DEVICE);
+			return FALLBACK_DEVICE;
+		}
+		byte[] macBytes = macAddressToByteArray(macString);
+
+		try {
+			Enumeration<NetworkInterface> ifaces = NetworkInterface.getNetworkInterfaces();
+			while (ifaces.hasMoreElements()) {
+				NetworkInterface iface = ifaces.nextElement();
+
+				byte[] hardwareAddress = iface.getHardwareAddress();
+				if (hardwareAddress != null && Arrays.equals(macBytes, hardwareAddress)) {
+					return iface.getName();
+				}
+			}
+		} catch (IOException e) {
+			Log.e(TAG, "", e);
+		}
+
+		Log.w(TAG, "None found - falling back to the default device name: " + FALLBACK_DEVICE);
 		return FALLBACK_DEVICE;
 	}
 

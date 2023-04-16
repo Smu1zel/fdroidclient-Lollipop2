@@ -45,6 +45,7 @@ public class UsbDeviceAttachedReceiver extends BroadcastReceiver {
     public static final String TAG = "UsbDeviceAttachedReceiv";
 
 
+    @RequiresApi(api = 19)
     @Override
     public void onReceive(final Context context, Intent intent) {
 

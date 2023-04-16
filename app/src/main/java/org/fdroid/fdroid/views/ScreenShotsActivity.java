@@ -1,5 +1,6 @@
 package org.fdroid.fdroid.views;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -151,6 +152,7 @@ public class ScreenShotsActivity extends AppCompatActivity {
         }
     }
 
+    @TargetApi(11)
     public static class DepthPageTransformer implements ViewPager.PageTransformer {
 
         public void transformPage(@NonNull View view, float position) {

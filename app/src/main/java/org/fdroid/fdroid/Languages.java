@@ -1,5 +1,6 @@
 package org.fdroid.fdroid;
 
+import android.annotation.TargetApi;
 import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.res.Configuration;
@@ -78,6 +79,7 @@ public final class Languages {
      * or different than the current system-wide locale.  The preference is cleared
      * if the language matches the system-wide locale or "System Default" is chosen.
      */
+    @TargetApi(17)
     public static void setLanguage(final ContextWrapper contextWrapper) {
         if (Build.VERSION.SDK_INT >= 24) {
             Utils.debugLog(TAG, "Languages.setLanguage() ignored on >= android-24");

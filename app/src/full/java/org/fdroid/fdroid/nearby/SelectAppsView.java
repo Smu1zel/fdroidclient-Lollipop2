@@ -46,6 +46,7 @@ public class SelectAppsView extends SwapView {
         super(context, attrs, defStyleAttr);
     }
 
+    @TargetApi(21)
     public SelectAppsView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
     }

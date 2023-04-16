@@ -168,7 +168,7 @@ database schema:
   <<: *test-template
   <<: *kvm-connected-template
 
-kvm 23 default x86:
+kvm 22 default x86:
   <<: *test-template
   <<: *kvm-template
 

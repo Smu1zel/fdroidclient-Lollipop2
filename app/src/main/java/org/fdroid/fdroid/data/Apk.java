@@ -1,6 +1,7 @@
 package org.fdroid.fdroid.data;
 
 import android.Manifest;
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.os.Build;
@@ -293,6 +294,7 @@ public class Apk implements Comparable<Apk>, Parcelable {
     }
 
     @Override
+    @TargetApi(19)
     public int compareTo(@NonNull Apk apk) {
         return Long.compare(versionCode, apk.versionCode);
     }
