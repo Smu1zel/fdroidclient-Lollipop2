@@ -16,13 +16,14 @@
 
 package cc.mvdan.accesspoint;
 
+import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.provider.Settings;
 import android.util.Log;
-
-import org.fdroid.fdroid.BuildConfig;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -34,14 +35,13 @@ import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.regex.Pattern;
-
-import javax.annotation.Nullable;
 
 /**
  * WifiApControl provides control over Wi-Fi APs using the singleton pattern.
@@ -65,6 +65,25 @@ final public class WifiApControl {
 	private static Method getWifiApStateMethod;
 	private static Method isWifiApEnabledMethod;
 	private static Method setWifiApEnabledMethod;
+
+	static {
+		for (Method method : WifiManager.class.getDeclaredMethods()) {
+			switch (method.getName()) {
+			case "getWifiApConfiguration":
+				getWifiApConfigurationMethod = method;
+				break;
+			case "getWifiApState":
+				getWifiApStateMethod = method;
+				break;
+			case "isWifiApEnabled":
+				isWifiApEnabledMethod = method;
+				break;
+			case "setWifiApEnabled":
+				setWifiApEnabledMethod = method;
+				break;
+			}
+		}
+	}
 
 	public static final int WIFI_AP_STATE_DISABLING = 10;
 	public static final int WIFI_AP_STATE_DISABLED  = 11;
@@ -109,45 +128,23 @@ final public class WifiApControl {
 
 	// getInstance is a standard singleton instance getter, constructing
 	// the actual class when first called.
-	@Nullable
 	public static WifiApControl getInstance(Context context) {
 		if (instance == null) {
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.System.canWrite(context)) {
 				Log.e(TAG, "6.0 or later, but haven't been granted WRITE_SETTINGS!");
 				return null;
 			}
-			try {
-				for (Method method : WifiManager.class.getDeclaredMethods()) {
-					switch (method.getName()) {
-						case "getWifiApConfiguration":
-							getWifiApConfigurationMethod = method;
-							break;
-						case "getWifiApState":
-							getWifiApStateMethod = method;
-							break;
-						case "isWifiApEnabled":
-							isWifiApEnabledMethod = method;
-							break;
-						case "setWifiApEnabled":
-							setWifiApEnabledMethod = method;
-							break;
-					}
-				}
-				instance = new WifiApControl(context);
-				instance.isEnabled();  // make sure this instance works
-			} catch (Throwable e) {
-				if (BuildConfig.DEBUG) {
-					throw e;
-				}
-				Log.e(TAG, "WifiManager failed to init", e);
-				return null;
-			}
+			instance = new WifiApControl(context);
 		}
 		return instance;
 	}
 
 	@TargetApi(Build.VERSION_CODES.GINGERBREAD)
 	private static String getDeviceName(WifiManager wifiManager) {
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.GINGERBREAD) {
+			Log.w(TAG, "Older device - falling back to the default device name: " + FALLBACK_DEVICE);
+			return FALLBACK_DEVICE;
+		}
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
 			Log.w(TAG, "6.0 or later, unaccessible MAC - falling back to the default device name: " + FALLBACK_DEVICE);
 			return FALLBACK_DEVICE;
@@ -177,6 +174,15 @@ final public class WifiApControl {
 
 		Log.w(TAG, "None found - falling back to the default device name: " + FALLBACK_DEVICE);
 		return FALLBACK_DEVICE;
+	}
+
+	private static byte[] macAddressToByteArray(String macString) {
+		String[] mac = macString.split("[:\\s-]");
+		byte[] macAddress = new byte[6];
+		for (int i = 0; i < mac.length; i++) {
+			macAddress[i] = Integer.decode("0x" + mac[i]).byteValue();
+		}
+		return macAddress;
 	}
 
 	private static Object invokeQuietly(Method method, Object receiver, Object... args) {

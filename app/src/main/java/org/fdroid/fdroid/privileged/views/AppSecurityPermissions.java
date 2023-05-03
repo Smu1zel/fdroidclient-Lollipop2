@@ -29,6 +29,7 @@ import android.content.pm.PermissionGroupInfo;
 import android.content.pm.PermissionInfo;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.os.Parcel;
 import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
@@ -119,7 +120,7 @@ public class AppSecurityPermissions {
         public Drawable loadGroupIcon(Context context, PackageManager pm) {
             Drawable iconDrawable;
             if (icon != 0) {
-                iconDrawable = loadUnbadgedIcon(pm);
+                iconDrawable = (Build.VERSION.SDK_INT < 22) ? loadIcon(pm) : loadUnbadgedIcon(pm);
             } else {
                 iconDrawable = ContextCompat.getDrawable(context, R.drawable.ic_perm_device_info);
             }
@@ -263,6 +264,9 @@ public class AppSecurityPermissions {
     }
 
     private int[] getRequestedPermissionFlags(PackageInfo info) {
+        if (Build.VERSION.SDK_INT < 16) {
+            return new int[info.requestedPermissions.length];
+        }
         return info.requestedPermissionsFlags;
     }
 
@@ -343,7 +347,7 @@ public class AppSecurityPermissions {
      */
     @TargetApi(16)
     private static boolean isNewPermission(PackageInfo installedPkgInfo, int existingFlags) {
-        if (installedPkgInfo == null) {
+        if (installedPkgInfo == null || Build.VERSION.SDK_INT < 16) {
             return false;
         }
 
@@ -416,7 +420,8 @@ public class AppSecurityPermissions {
     private PermissionItemView getPermissionItemView(MyPermissionGroupInfo grp, MyPermissionInfo perm,
                                                      boolean first, CharSequence newPermPrefix) {
         PermissionItemView permView = (PermissionItemView) inflater.inflate(
-                (perm.flags & PermissionInfo.FLAG_COSTS_MONEY) != 0
+                Build.VERSION.SDK_INT >= 17 &&
+                        (perm.flags & PermissionInfo.FLAG_COSTS_MONEY) != 0
                         ? R.layout.app_permission_item_money : R.layout.app_permission_item,
                 null);
         permView.setPermission(grp, perm, first, newPermPrefix);
